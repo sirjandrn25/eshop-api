@@ -4,8 +4,14 @@ from rest_framework import serializers
 from django.contrib.auth.hashers import make_password,check_password
 
 
+class ProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Profile
+        fields = "__all__"
+        read_only_fields = ['id']
 
 class UserSerializer(serializers.ModelSerializer):
+    profile = ProfileSerializer(read_only=True,many=False)
     class Meta:
         model = User
         # fields = "__all__"

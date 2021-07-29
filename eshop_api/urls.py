@@ -23,6 +23,10 @@ from rest_framework.routers import SimpleRouter
 
 router = SimpleRouter()
 router.register("users",UserApiViewSets,basename="user")
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+    TokenRefreshView,
+)
 
 
 urlpatterns = [
@@ -31,6 +35,8 @@ urlpatterns = [
     path("store-api/",include('store.urls')),
     path("",include(router.urls)),
     path("user_login/",UserLoginApiView.as_view()),
+    path("user_refresh_token/",TokenRefreshView.as_view()),
+    path('user_logout/',UserLogoutApiView.as_view()),
    
 ]
 
