@@ -20,3 +20,14 @@ color_choices = (
     ('maroon','Maroon'),
     ('cyan','Cyan')
 )
+
+gender_choices = (
+    ('male','Male'),
+    ('female','Female')
+)
+size_type_choices = (
+        ('int','Int'),
+        ('string','String'),
+        ('eu','EU'),
+        ('Chest','Chest')
+    )

@@ -18,10 +18,11 @@ class User(AbstractUser,DateTimeTracker):
 
 
 class Profile(models.Model):
+    global gender_choices
     address = models.CharField(max_length=200,blank=True)
     avatar = models.ImageField(upload_to="avatar/",null=True,blank=True)
     user = models.OneToOneField(User,on_delete=models.CASCADE,related_name="profile")
-
+    gender = models.CharField(max_length=10,choices=gender_choices,default=gender_choices[0][0])
     def __str__(self):
         return self.user.full_name
 

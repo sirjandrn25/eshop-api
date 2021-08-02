@@ -1,7 +1,7 @@
-from rest_framework.permissions import BasePermission
+from rest_framework import permissions
 
 
-class IsAdminOrOwnUser(BasePermission):
+class IsAdminOrOwnUser(permissions.BasePermission):
     def has_permission(self, request, view):
         if request.method == 'POST':
             return request.user.is_superuser
@@ -17,3 +17,10 @@ class IsAdminOrOwnUser(BasePermission):
             if request.user.is_superuser or request.user==obj:
                 return True
             return False
+    
+class IsOwnUser(permissions.BasePermission):
+    def has_object_permission(self,request,view,obj):
+        if request.user.is_superuser:
+            return True
+        return request.user==obj.user
+        
