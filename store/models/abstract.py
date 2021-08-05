@@ -29,5 +29,5 @@ size_type_choices = (
         ('int','Int'),
         ('string','String'),
         ('eu','EU'),
-        ('Chest','Chest')
+        ('chest','Chest')
     )

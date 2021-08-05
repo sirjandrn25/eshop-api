@@ -13,6 +13,19 @@ class FashionViewSet(ModelViewSet):
     # permission_classes = [IsAdminUser]
     queryset = Fashion.objects.all()
     serializer_class = FashionSerializer
+    def destroy(self, request, pk=None):
+        fashion = get_object_or_404(Fashion.objects.all(),pk=pk)
+        try:
+            fashion.delete()
+            return Response(status=204)
+        except Exception as e:
+          
+            error = {
+                'detail':["can't delete this instance. please first delete this instance related information"]
+            }
+            return Response(error,status=400)
+
+
 
 
 class CategoryViewSet(ModelViewSet):
@@ -21,48 +34,44 @@ class CategoryViewSet(ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
 
+    def destroy(self, request, pk=None):
+        category = get_object_or_404(Category.objects.all(),pk=pk)
+        try:
+            category.delete()
+            return Response(status=204)
+        except Exception as e:
+            
+            error = {
+                'detail':["can't delete this instance. please first delete this instance related information"]
+            }
+            return Response(error,status=400)
+
 
 class ProductViewSet(ModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     # authentication_classes = [JWTAuthentication]
     # permission_classes = [IsAdminUser]
-
-    @action(detail=True,methods=['put'])
-    def sizes(self,request,pk=None):
-        size = request.data.get('size')
-        if size:
-            product_size = ProductSize.objects.get(id=size)
-            product = get_object_or_404(self.get_queryset(),pk=pk)
-            exist_size_list = [product_size.id for product_size in product.sizes.all() if ((product_size.id == size) or (product_size.size == size))]
-            if exist_size_list:
+    def destroy(self, request, pk=None):
+        product = get_object_or_404(Product.objects.all(),pk=pk)
+        try:
+            product.delete()
+            return Response(status=204)
+        except Exception as e:
             
-                product.sizes.remove(product_size)
-                serializer = ProductSerializer(product)
-                return Response(serializer.data,status=201)
-            else:
-                product.sizes.add(product_size)
-                serializer = ProductSerializer(product)
-                return Response(serializer.data,status=200)
-        else:
-            resp = {
-                'size':["this field is required"]
+            error = {
+                'detail':["can't delete this instance. please first delete this instance related information"]
             }
-            return Response(resp,status=404)
+            return Response(error,status=400)
+  
+    
     @action(detail=True,methods=['get'])
     def colors(self,request,pk=None):
         product = get_object_or_404(self.get_queryset(),pk=pk)
         color_list = product.colors.all()
         serializer = ProductColorSerializer(color_list,many=True)
         return Response(serializer.data,status=200)
-
-
-class ProductSizeViewSet(ModelViewSet):
-    # authentication_classes = [JWTAuthentication]
-    # permission_classes = [IsAdminUser]
     
-    queryset = ProductSize.objects.all()
-    serializer_class = ProductSizeSerializer
     
 
 
@@ -72,6 +81,18 @@ class ProductColorViewSet(ModelViewSet):
     # permission_classes = [IsAdminUser]
     serializer_class = ProductColorSerializer
     queryset = ProductColor.objects.all()
+
+    def destroy(self, request, pk=None):
+        product_color = get_object_or_404(ProductColor.objects.all(),pk=pk)
+        try:
+            product_color.delete()
+            return Response(status=204)
+        except Exception as e:
+            
+            error = {
+                'detail':["can't delete this instance. please first delete this instance related information"]
+            }
+            return Response(error,status=400)
 
     @action(detail=True,methods=["get","post"])
     def images(self,request,pk=None):
@@ -90,13 +111,52 @@ class ProductColorViewSet(ModelViewSet):
       
         serializer = ProductImageGallerySerializer(product_color.images.all(),many=True)
         return Response(serializer.data,status=200)
+    
+        
+    @action(detail=True,methods=['get','post'])
+    def sizes(self,request,pk=None):
+        product_color_obj = self.get_object()
+        if request.method == 'POST':
+            data = request.data
+            data['color'] = pk
+            serializer = ProductSizeSerializer(data=data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data,status=201)
+            else:
+                return Response(serializer.errors,status=404)
+        
+        serializer = ProductSizeSerializer(product_color_obj.sizes.all(),many=True)
+        return Response(serializer.data,status=200)
+        
+            
+        
 
     
+
 class ProductImageGallerViewSet(ModelViewSet):
     # authentication_classes = [JWTAuthentication]
     # permission_classes = [IsAdminUser]
     serializer_class = ProductImageGallerySerializer
     queryset = ProductImageGallery.objects.all()
+
+
+class SizeViewSet(ModelViewSet):
+    serializer_class = SizeSerializer
+    queryset = Size.objects.all()
+
+    def destroy(self, request, pk=None):
+        size = get_object_or_404(Size.objects.all(),pk=pk)
+        try:
+            size.delete()
+            return Response(status=204)
+        except Exception as e:
+
+            error = {
+                'detail':["can't delete this instance. please first delete this instance related information"]
+            }
+            return Response(error,status=400)
+
 
 
 

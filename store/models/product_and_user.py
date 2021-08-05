@@ -1,20 +1,19 @@
 from django.db import models
-from django.db.models.fields import related
+
 from store.models import *
 from .abstract import *
+# from django.contrib.postgres.fields import JSONField
+# from json_field import JSONField
 
 
 class Cart(DateTimeTracker):
-    product_color = models.ForeignKey(ProductColor,on_delete=models.CASCADE,related_name="carts")
-    size = models.ManyToManyField(ProductSize)
-    quantity = models.IntegerField(default=1)
+    product = models.ForeignKey(Product,on_delete=models.CASCADE,related_name="carts")
     user = models.ForeignKey(User,on_delete=models.CASCADE,related_name="carts")
-
-    def __str__(self):
-        return f"{self.product_color.product.title} {self.size} {self.product_color}"
-
-    class Meta:
-        unique_together = ('user','product_color')
+    sizes = models.ManyToManyField(ProductSize,blank=True)
+    quantity = models.IntegerField(default=1)
+    is_active = models.BooleanField(default=True)
+    
+    
 
 
 class Order(DateTimeTracker):
@@ -37,4 +36,6 @@ class Order(DateTimeTracker):
 
     def __str__(self):
         return f"{self.product.product.title} {self.size} {self.product}"
-    
+
+
+
