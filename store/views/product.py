@@ -1,3 +1,4 @@
+from django.db.models import query
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from django.shortcuts import get_object_or_404
@@ -50,8 +51,7 @@ class CategoryViewSet(ModelViewSet):
 class ProductViewSet(ModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
-    # authentication_classes = [JWTAuthentication]
-    # permission_classes = [IsAdminUser]
+    
     def destroy(self, request, pk=None):
         product = get_object_or_404(Product.objects.all(),pk=pk)
         try:
@@ -65,12 +65,22 @@ class ProductViewSet(ModelViewSet):
             return Response(error,status=400)
   
     
-    @action(detail=True,methods=['get'])
+    @action(detail=True,methods=['get',"post"])
     def colors(self,request,pk=None):
-        product = get_object_or_404(self.get_queryset(),pk=pk)
-        color_list = product.colors.all()
-        serializer = ProductColorSerializer(color_list,many=True)
-        return Response(serializer.data,status=200)
+        if request.method == "GET":
+            product = get_object_or_404(self.get_queryset(),pk=pk)
+            color_list = product.colors.all()
+            serializer = ProductColorSerializer(color_list,many=True)
+            return Response(serializer.data,status=200)
+        elif request.method == "POST":
+            serializer = ProductColorSerializer(data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data,status=201)
+            else:
+                return Response(serializer.errors,status=404)
+
+        
     
     
 
@@ -128,6 +138,7 @@ class ProductColorViewSet(ModelViewSet):
         
         serializer = ProductSizeSerializer(product_color_obj.sizes.all(),many=True)
         return Response(serializer.data,status=200)
+    
         
             
         
@@ -141,21 +152,26 @@ class ProductImageGallerViewSet(ModelViewSet):
     queryset = ProductImageGallery.objects.all()
 
 
-class SizeViewSet(ModelViewSet):
-    serializer_class = SizeSerializer
-    queryset = Size.objects.all()
+class ProductSizeViewSet(ModelViewSet):
+    serializer_class = ProductSizeSerializer
+    queryset = ProductSize.objects.all()
 
-    def destroy(self, request, pk=None):
-        size = get_object_or_404(Size.objects.all(),pk=pk)
-        try:
-            size.delete()
-            return Response(status=204)
-        except Exception as e:
 
-            error = {
-                'detail':["can't delete this instance. please first delete this instance related information"]
-            }
-            return Response(error,status=400)
+# class SizeViewSet(ModelViewSet):
+#     serializer_class = SizeSerializer
+#     queryset = Size.objects.all()
+
+#     def destroy(self, request, pk=None):
+#         size = get_object_or_404(Size.objects.all(),pk=pk)
+#         try:
+#             size.delete()
+#             return Response(status=204)
+#         except Exception as e:
+
+#             error = {
+#                 'detail':["can't delete this instance. please first delete this instance related information"]
+#             }
+#             return Response(error,status=400)
 
 
 

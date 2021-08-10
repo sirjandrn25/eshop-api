@@ -1,5 +1,6 @@
+from copy import error
 from rest_framework.generics import get_object_or_404
-from store.models.product_and_user import Cart
+from store.models.product_and_user import Cart, Order
 from rest_framework import serializers
 from store.models import *
 
@@ -13,39 +14,60 @@ class CartSerializer(serializers.ModelSerializer):
         read_only_fields = ['id']
     
     def validate(self,validated_data):
+        product_size = validated_data.get('product_size')
         product = validated_data.get('product')
         user = validated_data.get('user')
-        sizes = validated_data.get('sizes')
-        if product.colors.all() and sizes is None:
-            error = {
-                "sizes":["sizes may be required"]
-            }
-            raise serializers.ValidationError(error)
+        quantity = validated_data.get('quantity')
 
-        if sizes:
-            carts = [ cart for cart in Cart.objects.filter(user=user,product=product)]
-            for cart in carts:
-                if all([True if size in cart.sizes.all() else False for size in sizes]):
-                    error = {
-                        "detail":["this product is already available in cart"]
-                    }
-                    raise serializers.ValidationError(error)
-            size_types = [size.size.size_type for size in sizes]
-            if len(set(size_types))<=1 and len(size_types)>1:
-                error= {
-                    "sizes":["different size type size may be allowed"]
+        if quantity:
+            if type(quantity) == int:
+                if quantity<=0:
+                    validated_data['quantity'] = 1
+            else:
+                errors = {
+                    "quantity":["quantity may be required in integer value"]
                 }
-                raise serializers.ValidationError(error)
-            validated_data['sizes'] = sizes
+                raise serializers.ValidationError(errors)
+
+        if product_size:
+            cart = Cart.objects.filter(user=user,product=product,product_size=product_size).first()
+            if cart:
+                errors = {
+                    "cart":['this cart is already exists']
+                }
+                raise serializers.ValidationError(errors)
+            if quantity> product_size.stock:
+                errors = {
+                    "quanity":["quantity may not be greater than product stock"]
+                }
+                raise serializers.ValidationError(errors)
         else:
             cart = Cart.objects.filter(user=user,product=product).first()
-        
             if cart:
-                error = {
-                    "detail":["this product is already availbale in cart"]
+                errors = {
+                    "cart":['this cart is already exists']
                 }
-                raise serializers.ValidationError(error)
+                raise serializers.ValidationError(errors)
             
-            
+            if quantity> product.total_stock:
+                errors = {
+                    "quanity":["quantity may not be greater than product stock"]
+                }
+                raise serializers.ValidationError(errors)
+        
+
         return validated_data
 
+
+class OrderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Order
+        fields = "__all__"
+        read_only_fields = ['id']
+
+class OrderDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OrderDetail
+        fields = "__all__"
+        read_only_fields = ["id"]
+        

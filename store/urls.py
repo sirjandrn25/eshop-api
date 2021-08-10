@@ -9,11 +9,12 @@ router = SimpleRouter()
 router.register("fashions",FashionViewSet,basename="fashion")
 router.register("categories",CategoryViewSet,basename="category")
 router.register("products",ProductViewSet,basename="product")
-router.register("sizes",SizeViewSet,basename="size")
+# router.register("sizes",SizeViewSet,basename="size")
 router.register("product_colors",ProductColorViewSet,basename="product_color")
 router.register("carts",CartViewSet,basename="cart")
-# router.register("orders",OrderViewSet,basename="order")
+router.register("orders",OrderViewSet,basename="order")
 router.register("product_color_images",ProductImageGallerViewSet,basename="product_color_image")
+# router.register("product_sizes",ProductSizeViewSet,basename="product_size")
 
 
 
