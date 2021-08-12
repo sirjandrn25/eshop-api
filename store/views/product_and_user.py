@@ -6,6 +6,7 @@ from store.serializers import *
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.permissions import IsAdminUser
 from django.shortcuts import get_object_or_404
+from rest_framework.decorators import action
 
 
 class CartViewSet(ModelViewSet):
@@ -15,26 +16,17 @@ class CartViewSet(ModelViewSet):
     # permission_classes = [IsAdminUser]
 
 
-
 class OrderViewSet(ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
 
     def create_order_detail(self,carts,order):
-    
         for cart in carts:
             order_detail = OrderDetail.objects.create(order=order,product=cart.product,price=cart.product.price,quantity=cart.quantity,product_size=cart.product_size,discount=cart.product.discount)
-            cart.delete()
-        
-
-
-            
-        
+            cart.delete()   
 
     def create(self,request):
         carts = request.data.get('carts')
-        
-
         serializer = OrderSerializer(data=request.data)
         if serializer.is_valid():
             if carts:
@@ -50,6 +42,11 @@ class OrderViewSet(ModelViewSet):
                         return Response(errors,status=404)
                     if cart.is_active:
                         cart_list.append(cart)
+                if len(cart_list) == 0:
+                    errors = {
+                        'carts':["please give atleast one active cart"]
+                    }
+                    return Response(errors,status=404)
                     
             else:
                 errors = {

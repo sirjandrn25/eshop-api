@@ -30,6 +30,7 @@ class Product(DateTimeTracker):
     category = models.ForeignKey(Category,on_delete=models.CASCADE,related_name="products")
     image = models.ImageField(upload_to="products/")
     is_available = models.BooleanField(default=True)
+    is_stock = models.BooleanField(default=True)
     total_stock = models.IntegerField(default=1)
     
     def __str__(self):
@@ -50,7 +51,8 @@ class ProductSize(models.Model):
     color = models.ForeignKey(ProductColor,on_delete=models.CASCADE,related_name="sizes")
     size = models.JSONField()
     stock = models.IntegerField(default=1)
-    is_available = models.BooleanField(default=False)
+    is_stock = models.BooleanField(default=True)
+   
 
     class Meta:
         unique_together = ['color','size']

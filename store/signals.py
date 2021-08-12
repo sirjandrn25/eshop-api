@@ -13,131 +13,132 @@ def create_profile(sender,**kwargs):
         
 
 
-# @receiver(pre_save,sender=Product)
-# def product_signal(sender,**kwargs):
-    
-#     instance = kwargs.get('instance')
-#     if instance.total_stock <=0:
-#         instance.is_available = False
-#         instance.total_stock = 0
-
-#     # adjust the total stock with the help of product size related stock
-#     if instance.colors.all():
-#         total_stock = 0
-#         for color in instance.colors.all():
-#             total_stock += sum([size.stock for size in color.sizes.all()])
-#         instance.total_stock = total_stock
-    
-#     # check total stock and check if all product related color is available
-#     if instance.total_stock >0 and (all([color.is_available==False for color in instance.colors.all()])== False):
-#         instance.is_available = True
-    
-
-# @receiver(post_save,sender=Product)
-# def product_post_signal(sender,**kwargs):
-#     instance = kwargs.get('instance')
-#     carts = Cart.objects.filter(product=instance)
-#     if instance.is_available == False:
-#         for cart in carts:
-#             cart.is_active = False
-#             cart.save()
-#     else:
-        
-#         # if colors is not present in product then cart is handle
-#         if instance.colors.all()==[]:
-#             for cart in carts:
-#                 cart.is_active = True
-#                 cart.save()
-#         else:
-#             # if colors is present in product then cart is handle 
-#             for cart in carts:
-#                 if all([size.is_available for size in cart.sizes.all()]):
-#                     cart.is_active = True
-#                     cart.save()
+@receiver(pre_save,sender=Product)
+def product_pre_signal(sender,**kwargs):
+    created = kwargs.get('created')
+    instance = kwargs.get('instance')
+    if created and instance.total_stock <0:
+        instance.total_stock = 0
+        instance.is_stock = False
+    else:
+        colors = instance.colors.all()
+        if len(colors):
+            # manage the total stock according to product size stock
+            total_stock = 0
+            for color in colors:
+                total_stock += sum([ size.stock for size in color.sizes.all()])
             
+            instance.total_stock = total_stock
+            if total_stock == 0:
+                instance.is_stock = False
+            else:
+                instance.is_stock = True
+            if instance.is_available and all([ color.is_available==False for color in colors]):
+                instance.is_available = False
+
+        else:
+            if instance.total_stock <=0:
+                instance.total_stock = 0
+                instance.is_stock = False
+            else:
+                instance.is_stock = True
+
+@receiver(post_save,sender=Product)
+def product_post_signal(sender,**kwargs):
+    instance = kwargs.get('instance')
+    if instance.is_available is False or instance.is_stock is False:
+        for cart in instance.carts.all():
+            cart.is_active = False
+            cart.save()
+    else:
+        for cart in instance.carts.all():
+            if cart.product_size.is_stock:
+                cart.is_active = True
+                cart.save()
+
+
+@receiver(post_save,sender=ProductColor)
+def product_color_post_signal(sender,**kwargs):
+    created = kwargs.get('created')
+    instance = kwargs.get('instance')
+    
+    if created is False:
+        # product is not available if all product colors not available
+        if instance.is_available == False:
+
+            if all([ color.is_available == False for color in instance.product.colors.all()]):
+                instance.product.is_available = False
+                instance.product.save()
+        else:
+            instance.product.is_available = True
+            instance.product.save()
             
 
+@receiver(pre_save,sender=ProductSize)
+def product_size_pre_signal(sender,**kwargs):
+    created = kwargs.get('created')
+    instance = kwargs.get('instance')
 
+    if instance.stock <=0:
+        instance.stock = 0
+        instance.is_stock = False
+    else:
+        instance.is_stock = True
+
+@receiver(post_save,sender=ProductSize)
+def product_size_post_signal(sender,**kwargs):
+    instance = kwargs.get('instance')
+    if instance.is_stock:
+        instance.color.is_available = True
+        instance.color.save()
+
+    else:
+        # check all product color sizes if not stock then color is unavailable 
+        if all([ size.is_stock == False for size in instance.color.sizes.all()]):
+            instance.color.is_available = False
+            instance.color.save()
+    if instance.is_stock is False:
+        for cart in instance.carts.all():
+            cart.is_active = False
+            cart.save()
+    else:
+        for cart in instance.carts.all():
+            if cart.product.is_available:
+                cart.is_active = True
+                cart.save()
+
+    # all product sizes related stock get and add total stock in product
+    product = instance.color.product
+    total_stock = 0
+    for color in product.colors.all():
+        total_stock += sum([ size.stock for size in color.sizes.all()])
+    product.total_stock = total_stock
+    product.save()
         
 
 
 
-# @receiver(pre_save,sender=ProductColor)
-# def product_color_signal(sender,**kwargs):
-#     instance = kwargs.get('instance')
-#     created = kwargs.get('created')
-
+@receiver(pre_save,sender=Cart)
+def cart_signal(sender,**kwargs):
+    created = kwargs.get('created')
+    instance = kwargs.get('instance')
+    if instance.is_active:
+        if (instance.product.is_stock is False or instance.product.is_available is False ) or (instance.product_size and instance.product_size.is_stock is False):
+            instance.is_active = False
     
-#     # if all product sizes is unavailable the this sizes related product color is unavailable
-#     if (len(instance.sizes.all()) == 0) or all([size.is_available==False for size in instance.sizes.all()]):
-#         instance.is_available = False
 
-
-# @receiver(post_save,sender=ProductColor)
-# def product_color_signal(sender,**kwargs):
-#     created = kwargs.get('created')
-#     instance = kwargs.get('instance')
-#     product = instance.product
-    
-#     # if all product related colors is not available then product is unavailable
-#     if all([product_color.is_available==False for product_color in product.colors.all()]) and created is False:
-#         product.is_available=False
-#         product.save()
-#     else:
-#         product.is_available = True
-#         product.save()
-
-
-
-# @receiver(pre_save,sender=ProductSize)
-# def productSize_pre_signal(sender,**kwargs):
-#     instance = kwargs.get('instance')
-#     if instance.stock<=0:
-#         instance.is_available = False
-#     else:
-#         instance.is_available = True
-
+@receiver(post_save,sender=OrderDetail)
+def order_detail_signal(sender,**kwargs):
+    created = kwargs.get('created')
+    instance = kwargs.get('instance')
+    if created:
+        if instance.product_size:
         
-        
-    
-
-# @receiver(post_save,sender=ProductSize)
-# def productSize_post_signal(sender,**kwargs):
-#     instance = kwargs.get('instance')
-#     item_stocks = [size.stock for size in instance.color.sizes.all()]
-#     product = instance.color.product
-#     product.total_stock = sum(item_stocks)
-#     product.save()
-#     color = instance.color
-#     if all([size.is_available==False for size in color.sizes.all()]):
-#         color.is_available = False
-#         color.save()
-#     if instance.is_available is False:
-#         for cart in Cart.objects.filter(product=instance.color.product):
-#             print(cart)
-#             if instance in cart.sizes.all():
-#                 cart.is_active = False
-#                 cart.save()
-#     else:
-#         if instance.color.product.is_available:
-#             carts = [cart for cart in Cart.objects.filter(product=instance.color.product) if instance in cart.sizes.all()]
-#             print(carts)
-#             for cart in carts:
-#                 print([size.is_available for size in cart.sizes.all()])
-#                 if all([size.is_available for size in cart.sizes.all()]):
-#                     cart.is_active = True
-#                     cart.save()
+            instance.product_size.stock = instance.product_size.stock-instance.quantity
+            instance.product_size.save()
+        else:
+            instance.product.total_stock = instance.product.total_stock-instance.quantity
+            instance.product.save()
 
 
-
-
-# @receiver(pre_save,sender=Cart)
-# def cart_signal(sender,**kwargs):
-#     instance = kwargs.get('instance')
-#     if instance.sizes.all():
-#         if all([size.is_available for size in  instance.sizes.all()]) is False:
-#             instance.is_active = False
-#     else:
-#         if instance.product.is_available is False:
-#             instance.is_active = False
         
