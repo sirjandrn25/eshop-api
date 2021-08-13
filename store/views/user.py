@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from store.serializers import *
 from rest_framework.viewsets import ModelViewSet
-from rest_framework.decorators import action
+from rest_framework.decorators import action, authentication_classes, permission_classes
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.permissions import IsAuthenticatedOrReadOnly,IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -28,12 +28,12 @@ class UserLoginApiView(APIView):
         serializer = UserLoginSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
             user = serializer.validated_data.get('user')
-            user_serializer = UserSerializer(user,many=False)
+            
             refresh = RefreshToken.for_user(user)
             resp = {
                 'refresh':str(refresh),
                 'access':str(refresh.access_token),
-                'user':user_serializer.data
+                'user':user.id
             }
             return Response(resp,status=200)
         else:
@@ -61,6 +61,30 @@ class UserApiViewSets(ModelViewSet):
             return Response(user_serializer.data,status=200)
         else:
             return Response(serializer.errors,status=404)
+    
+    @action(detail=True,methods=["get"],permission_classes=[IsAuthenticated,IsAdminOrOwnUser])
+    def orders(self,request,pk=None):
+        user = get_object_or_404(self.get_queryset(),pk=pk)
+        orders = Order.objects.filter(user=user)
+        serializer = OrderSerializer(orders,many=True)
+        return Response(serializer.data,status=200)
+    
+    @action(detail=True,methods=["get"],permission_classes=[IsAuthenticated,IsAdminOrOwnUser])
+    def carts(self,request,pk=None):
+        user = get_object_or_404(self.get_queryset(),pk=pk)
+        carts = Cart.objects.filter(user=user)
+        serializer = CartSerializer(carts,many=True)
+        return Response(serializer.data,status=200)
+    
+    @action(detail=True,methods=['delete'],permission_classes=[IsAuthenticated,IsAdminOrOwnUser])
+    def clear_carts(self,request,pk=None):
+        user = get_object_or_404(self.get_queryset(),pk=pk)
+        carts = Cart.objects.filter(user=user)
+        for cart in carts:
+            cart.delete()
+        return Response(status=204)
+
+
 
 
 class UserLogoutApiView(APIView):

@@ -8,10 +8,11 @@ from rest_framework.decorators import action
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.permissions import IsAdminUser
 from store.permissions import *
+from store.permissions import *
 
 class FashionViewSet(ModelViewSet):
-    # authentication_classes = [JWTAuthentication]
-    # permission_classes = [IsAdminUser]
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAdminUserOrReadOnly]
     queryset = Fashion.objects.all()
     serializer_class = FashionSerializer
     def destroy(self, request, pk=None):
@@ -30,8 +31,8 @@ class FashionViewSet(ModelViewSet):
 
 
 class CategoryViewSet(ModelViewSet):
-    # authentication_classes = [JWTAuthentication]
-    # permission_classes = [IsAdminUser]
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAdminUserOrReadOnly]
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
 
@@ -51,7 +52,8 @@ class CategoryViewSet(ModelViewSet):
 class ProductViewSet(ModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
-    
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAdminUserOrReadOnly]
     def destroy(self, request, pk=None):
         product = get_object_or_404(Product.objects.all(),pk=pk)
         try:
@@ -73,6 +75,8 @@ class ProductViewSet(ModelViewSet):
             serializer = ProductColorSerializer(color_list,many=True)
             return Response(serializer.data,status=200)
         elif request.method == "POST":
+            data = request.data
+            data['product'] = pk
             serializer = ProductColorSerializer(data=request.data)
             if serializer.is_valid():
                 serializer.save()
@@ -87,8 +91,8 @@ class ProductViewSet(ModelViewSet):
 
 
 class ProductColorViewSet(ModelViewSet):
-    # authentication_classes = [JWTAuthentication]
-    # permission_classes = [IsAdminUser]
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAdminUserOrReadOnly]
     serializer_class = ProductColorSerializer
     queryset = ProductColor.objects.all()
 
@@ -146,13 +150,15 @@ class ProductColorViewSet(ModelViewSet):
     
 
 class ProductImageGallerViewSet(ModelViewSet):
-    # authentication_classes = [JWTAuthentication]
-    # permission_classes = [IsAdminUser]
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAdminUserOrReadOnly]
     serializer_class = ProductImageGallerySerializer
     queryset = ProductImageGallery.objects.all()
 
 
 class ProductSizeViewSet(ModelViewSet):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAdminUserOrReadOnly]
     serializer_class = ProductSizeSerializer
     queryset = ProductSize.objects.all()
 

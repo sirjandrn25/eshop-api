@@ -36,7 +36,9 @@ class ProductSizeSerializer(serializers.ModelSerializer):
         fields = "__all__"
         read_only_fields = ['id']
     def validate(self,validated_data):
+        
         size = validated_data.get('size')
+
         if type(size) == dict:
             for key in size.keys():
                 if type(size[key]) == list:
@@ -44,12 +46,14 @@ class ProductSizeSerializer(serializers.ModelSerializer):
                         "size":["only one value is allowed in same type size"]
                     }
                     raise serializers.ValidationError(errors)
-            return validated_data
         else:
-            errors = {
-                'size':['size may be required in json format']
-            }
-            raise serializers.ValidationError(errors)
+            if size:
+                errors = {
+                    'size':['size may be required in json format']
+                }
+                raise serializers.ValidationError(errors)
+        return validated_data
+
 
 class ProductSerializer(serializers.ModelSerializer):
     # colors = ProductColorSerializer(many=True,read_only=True)

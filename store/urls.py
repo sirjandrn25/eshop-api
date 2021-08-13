@@ -14,7 +14,8 @@ router.register("product_colors",ProductColorViewSet,basename="product_color")
 router.register("carts",CartViewSet,basename="cart")
 router.register("orders",OrderViewSet,basename="order")
 router.register("product_color_images",ProductImageGallerViewSet,basename="product_color_image")
-# router.register("product_sizes",ProductSizeViewSet,basename="product_size")
+router.register("product_sizes",ProductSizeViewSet,basename="product_size")
+router.register("order_details",OrderDetailViewSet,basename="order_detail")
 
 
 

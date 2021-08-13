@@ -52,9 +52,14 @@ def product_post_signal(sender,**kwargs):
             cart.save()
     else:
         for cart in instance.carts.all():
-            if cart.product_size.is_stock:
-                cart.is_active = True
-                cart.save()
+            if cart.product_size:
+                if cart.product_size.is_stock and cart.quantity <= cart.product_size.stock:
+                    cart.is_active = True
+                    cart.save()
+            else:
+                if cart.product.is_available and cart.product.is_stock and cart.product.total_stock >= cart.quantity:
+                    cart.is_active = True
+                    cart.save()
 
 
 @receiver(post_save,sender=ProductColor)
@@ -99,11 +104,12 @@ def product_size_post_signal(sender,**kwargs):
             instance.color.save()
     if instance.is_stock is False:
         for cart in instance.carts.all():
+    
             cart.is_active = False
             cart.save()
     else:
         for cart in instance.carts.all():
-            if cart.product.is_available:
+            if cart.product_size.is_stock and cart.product.is_available and cart.quantity<=cart.product_size.stock:
                 cart.is_active = True
                 cart.save()
 
@@ -133,7 +139,7 @@ def order_detail_signal(sender,**kwargs):
     instance = kwargs.get('instance')
     if created:
         if instance.product_size:
-        
+            
             instance.product_size.stock = instance.product_size.stock-instance.quantity
             instance.product_size.save()
         else:

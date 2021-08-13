@@ -23,7 +23,7 @@ class Category(models.Model):
 
 
 class Product(DateTimeTracker):
-    title = models.CharField(max_length=300)
+    title = models.CharField(max_length=300,unique=True)
     description = models.TextField(blank=True)
     price = models.FloatField()
     discount = models.FloatField(default=0)
